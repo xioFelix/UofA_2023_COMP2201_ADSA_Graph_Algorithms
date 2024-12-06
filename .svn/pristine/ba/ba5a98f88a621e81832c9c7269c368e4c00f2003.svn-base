@@ -1,0 +1,71 @@
+#include <algorithm>
+#include <climits>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int N;
+vector<vector<int>> country, build, destroyCost;
+
+int prim() {
+    vector<int> parent(N, -1);
+    vector<int> key(N, INT_MAX);
+    vector<bool> inMST(N, false);
+    key[0] = 0;
+    
+    for (int count = 0; count < N - 1; count++) {
+        int min = INT_MAX, u;
+        
+        for (int v = 0; v < N; v++) {
+            if (inMST[v] == false && key[v] < min)
+                min = key[v], u = v;
+        }
+        
+        inMST[u] = true;
+
+        for (int v = 0; v < N; v++) {
+            if (!country[u][v] && inMST[v] == false && build[u][v] < key[v])
+                parent[v] = u, key[v] = build[u][v];
+        }
+    }
+
+    int cost = 0;
+    for (int i = 1; i < N; i++) {
+        if (country[i][parent[i]]) {
+            cost += destroyCost[i][parent[i]];
+        } else {
+            cost += build[i][parent[i]];
+        }
+    }
+    return cost;
+}
+
+int main() {
+    string s_country, s_build, s_destroyCost;
+    cin >> s_country >> s_build >> s_destroyCost;
+
+    N = count(s_country.begin(), s_country.end(), ',') + 1;
+
+    country.resize(N, vector<int>(N, 0));
+    build.resize(N, vector<int>(N, 0));
+    destroyCost.resize(N, vector<int>(N, 0));
+
+    // Parse input strings
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            country[i][j] = s_country[i * (N + 1) + j] - '0';
+            build[i][j] = (isupper(s_build[i * (N + 1) + j]))
+                            ? s_build[i * (N + 1) + j] - 'A'
+                            : s_build[i * (N + 1) + j] - 'a' + 26;
+            destroyCost[i][j] = (isupper(s_destroyCost[i * (N + 1) + j]))
+                                ? s_destroyCost[i * (N + 1) + j] - 'A'
+                                : s_destroyCost[i * (N + 1) + j] - 'a' + 26;
+        }
+    }
+
+    cout << prim() << endl;
+    return 0;
+}

@@ -1,0 +1,91 @@
+#include <algorithm>
+#include <climits>
+#include <cstring>
+#include <iostream>
+#include <queue>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int N;
+vector<vector<int> > country;
+vector<vector<int> > build;
+vector<vector<int> > destroyCost;
+bool visited[52];
+
+void dfs(int u, vector<vector<int> >& graph) {
+  visited[u] = true;
+  for (int v = 0; v < N; v++) {
+    if (graph[u][v] && !visited[v]) {
+      dfs(v, graph);
+    }
+  }
+}
+
+int main() {
+  string s_country, s_build, s_destroyCost;
+  cin >> s_country >> s_build >> s_destroyCost;
+
+  N = count(s_country.begin(), s_country.end(), ',') + 1;
+
+  country.resize(N, vector<int>(N, 0));
+  build.resize(N, vector<int>(N, 0));
+  destroyCost.resize(N, vector<int>(N, 0));
+
+  // Parse input strings
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      country[i][j] = s_country[i * (N + 1) + j] - '0';
+      build[i][j] = (isupper(s_build[i * (N + 1) + j]))
+                        ? s_build[i * (N + 1) + j] - 'A'
+                        : s_build[i * (N + 1) + j] - 'a' + 26;
+      destroyCost[i][j] = (isupper(s_destroyCost[i * (N + 1) + j]))
+                              ? s_destroyCost[i * (N + 1) + j] - 'A'
+                              : s_destroyCost[i * (N + 1) + j] - 'a' + 26;
+    }
+  }
+
+  int cost = 0;
+
+  // Check for cities that are not connected and add roads
+  memset(visited, false, sizeof(visited));
+  dfs(0, country);
+  for (int i = 1; i < N; i++) {
+    if (!visited[i]) {
+      int minCost = INT_MAX;
+      int minU = -1, minV = -1;
+      for (int j = 0; j < i; j++) {
+        if (country[i][j] == 0 && build[i][j] < minCost) {
+          minCost = build[i][j];
+          minU = i;
+          minV = j;
+        }
+      }
+      if (minU != -1) {
+        country[minU][minV] = country[minV][minU] = 1;
+        cost += minCost;
+        dfs(minU, country);
+      }
+    }
+  }
+
+  // Check for cities that have more than one path and remove roads
+  for (int i = 0; i < N; i++) {
+    for (int j = i + 1; j < N; j++) {
+      if (country[i][j]) {
+        country[i][j] = country[j][i] = 0;
+        memset(visited, false, sizeof(visited));
+        dfs(i, country);
+        if (visited[j]) {
+          cost += destroyCost[i][j];
+        } else {
+          country[i][j] = country[j][i] = 1;
+        }
+      }
+    }
+  }
+
+  cout << cost << endl;
+  return 0;
+}

@@ -1,0 +1,88 @@
+#include <algorithm>
+#include <climits>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int N;
+vector<vector<int>> country, build, destroyCost;
+
+int prim() {
+  vector<int> key(N, INT_MAX);
+  vector<bool> inMST(N, false);
+  key[0] = 0;
+
+  for (int count = 0; count < N - 1; count++) {
+    int min = INT_MAX, u;
+
+    for (int v = 0; v < N; v++) {
+      if (!inMST[v] && key[v] < min) {
+        min = key[v], u = v;
+      }
+    }
+
+    inMST[u] = true;
+
+    for (int v = 0; v < N; v++) {
+      if (!inMST[v] && country[u][v] && country[u][v] < key[v]) {
+        key[v] = country[u][v];
+      }
+    }
+  }
+
+  int cost = 0;
+  for (int i = 0; i < N; i++) {
+    cost += key[i];
+  }
+  return cost;
+}
+
+int main() {
+  string s_country, s_build, s_destroyCost;
+  cin >> s_country >> s_build >> s_destroyCost;
+
+  N = count(s_country.begin(), s_country.end(), ',') + 1;
+
+  country.resize(N, vector<int>(N, 0));
+  build.resize(N, vector<int>(N, 0));
+  destroyCost.resize(N, vector<int>(N, 0));
+
+  // Parse input strings
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      country[i][j] = (s_country[i * (N + 1) + j] == '0')
+                          ? INT_MAX
+                          : s_country[i * (N + 1) + j] - '0';
+      build[i][j] = (isupper(s_build[i * (N + 1) + j]))
+                        ? s_build[i * (N + 1) + j] - 'A'
+                        : s_build[i * (N + 1) + j] - 'a' + 26;
+      destroyCost[i][j] = (isupper(s_destroyCost[i * (N + 1) + j]))
+                              ? s_destroyCost[i * (N + 1) + j] - 'A'
+                              : s_destroyCost[i * (N + 1) + j] - 'a' + 26;
+    }
+  }
+
+  int totalBuild = 0, totalDestroy = 0;
+
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      if (i < j) {
+        if (country[i][j] == 1) {
+          totalDestroy += destroyCost[i][j];
+        } else {
+          totalBuild += build[i][j];
+        }
+      }
+    }
+  }
+
+  int mstCost = prim();
+
+  int result = totalBuild + totalDestroy - mstCost;
+
+  cout << result << endl;
+  return 0;
+}
